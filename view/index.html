@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- 可选的 Bootstrap 主题文件（一般不用引入） -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://cdn.bootcss.com/socket.io/2.1.1/socket.io.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row" style="margin-top:200px">
+            <h1>socket.io聊天室尝试(<span></span>)</h1>
+            <h4>在线人数： <span></span></h4>
+            <div class=" form-group ">
+                <label for="username ">用户名</label>
+                <input type="text " class="form-control " id="username" placeholder="请输入用户名 " style="width:80%;display:inline-block ">
+                <button class="btn btn-default login">登录聊天室</button>
+            </div>
+            <div class="logined" style="display:none">
+                <div class="chat">
+                    <!-- <div class="media">
+                        <div class="media-left">
+                            <a href="#">
+                        <img class="media-object" src="http://imgsrc.baidu.com/forum/w=580/sign=1588b7c5d739b6004dce0fbfd9503526/7bec54e736d12f2eb97e1a464dc2d56285356898.jpg" alt="...">
+                         </a>
+                        </div>
+                        <div class="media-body">
+                            <h4 class="media-heading">张三</h4>
+                            <p class="chat-content">哈哈哈哈哈哈哈哈哈哈哈哈哈哈好或哈或或或或哦哦哦哦哦哦哦哦哦哦哦哦哦哦哦哦哦哦</p>
+                        </div>
+                    </div> -->
+                </div>
+                <div class="row">
+                    <textarea class="form-control" id="textarea" rows="3"></textarea>
+                    <a href="javascript:void(0);" class="input">
+                        浏览
+                        <input type="file" id="file" name="document[file]">
+                    </a>
+                    <button type="button" class="btn btn-success" id="send">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+$('.login').on('click', function() {
+    console.log($('#username').val())
+    if ($('#username').val() != '') {
+        $('h1').find('span').text($('#username').val());
+        $('.form-group').hide();
+        $('.logined').show();
+    }
+});
+var arr = [];
+var chat = io.connect('http://106.3.37.139:5000');
+
+chat.on('connect', function(data) {
+    chat.emit('jia', 1);
+});
+chat.on('disconnect', function() {
+    console.log(123)
+    chat.emit('jian', 1)
+})
+chat.on('num1', function(data) {
+    console.log(data)
+    $('h4').find('span').text(data);
+})
+chat.on('num2', function(data) {
+    console.log(data)
+    $('h4').find('span').text(data);
+})
+chat.on('news', function(data) {
+    if (data.text) {
+        $('.chat').html($('.chat').html() + `<div class="media">
+                        <div class="media-left">
+                            <a href="#">
+                        <img class="media-object" src="http://imgsrc.baidu.com/forum/w=580/sign=1588b7c5d739b6004dce0fbfd9503526/7bec54e736d12f2eb97e1a464dc2d56285356898.jpg" alt="...">
+                         </a>
+                        </div>
+                        <div class="media-body">
+                            <h4 class="media-heading">` + data.username + `</h4>
+                            <p class="chat-content">` + data.text + `</p>
+                        </div>
+                    </div>`);
+    } else {
+        $('.chat').html($('.chat').html() + `<div class="media">
+                        <div class="media-left">
+                            <a href="#">
+                        <img class="media-object" src="http://imgsrc.baidu.com/forum/w=580/sign=1588b7c5d739b6004dce0fbfd9503526/7bec54e736d12f2eb97e1a464dc2d56285356898.jpg" alt="...">
+                         </a>
+                        </div>
+                        <div class="media-body">
+                            <h4 class="media-heading">` + data.username + `</h4>
+                            <img src="` + data.img + `" alt="" style="width:100px">
+                        </div>
+                    </div>`);
+    }
+
+
+});
+$('#send').on('click', function() {
+    if ($('#textarea').val() != '') {
+        chat.emit('text', { username: $('h1 span').text(), text: $('#textarea').val() });
+    }
+    $('#textarea').val('')
+
+})
+</script>
+<script type="text/javascript">
+$(function() {
+    $("#file").change(function() { // 当 id 为 file 的对象发生变化时
+        var file = this.files[0];
+        if (window.FileReader) {
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            //监听文件读取结束后事件
+            reader.onloadend = function(e) {
+                chat.emit('text', { username: $('h1 span').text(), img: e.target.result }); //e.target.result就是最后的路径地址
+                $("#file").val('')
+            }
+        };
+
+    })
+});
+</script>
+
+</html>
